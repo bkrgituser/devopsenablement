@@ -22,7 +22,7 @@ pipeline {
 
         // SLACK_CHANNEL = '#your-slack-channel'   // Change to your channel
         // SLACK_CREDENTIAL_ID = 'slack-token-id'  // Jenkins Credential ID for Slack token
-        EMAIL_RECIPIENTS = 'team@example.com'   // Change to your mailing list
+        EMAIL_RECIPIENTS = 'kiddukirankumar@gmail.com'   // Change to your mailing list
     }
     
     stages {
