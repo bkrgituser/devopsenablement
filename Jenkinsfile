@@ -2,12 +2,11 @@ pipeline {
     agent any
 
     environment {
+        
+         PATH = "/Users/kburugu/.nvm/versions/node/v20.19.0/bin:$PATH"
         SERVER_KEY_CREDENTALS_ID = "${env.SERVER_KEY_CREDENTALS_ID}"
 
         SF_INSTANCE_URL = "${env.SF_INSTANCE_URL}"
-
-         PATH = "/Users/kburugu/.nvm/versions/node/v20.19.0/bin:$PATH"
-        SERVER_KEY_CREDENTALS_ID = "${env.SERVER_KEY_CREDENTALS_ID}"
         
         // Dev Org
         SF_CONSUMER_KEY       = "${env.SF_Dev_CONSUMER_KEY}"
