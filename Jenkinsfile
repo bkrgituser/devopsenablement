@@ -38,7 +38,7 @@ pipeline {
             steps {
                 withCredentials([file(credentialsId: SERVER_KEY_CREDENTALS_ID, variable: 'SERVER_KEY')]) {
                     sh """
-                        sf auth:jwt:grant --clientid ${SF_CONSUMER_KEY} --jwtkeyfile \$SERVER_KEY --username ${SF_USERNAME} --instanceurl ${SF_INSTANCE_URL}
+                        sf auth:jwt:grant --clientid ${SF_CONSUMER_KEY} --jwt-key-file \$SERVER_KEY --username ${SF_USERNAME} --instanceurl ${SF_INSTANCE_URL}
                        
                         sf run test --targetusername ${SF_USERNAME} --testlevel ${TEST_LEVEL}
                         echo '✅ Deployment to Dev completed successfully!'
@@ -51,7 +51,7 @@ pipeline {
             steps {
                 withCredentials([file(credentialsId: SERVER_KEY_CREDENTALS_ID, variable: 'SERVER_KEY')]) {
                     sh """
-                        sf auth:jwt:grant --clientid ${SF_QA_CONSUMER_KEY} --jwtkeyfile \$SERVER_KEY --username ${SF_QA_USERNAME} --instanceurl ${SF_INSTANCE_URL}
+                        sf auth:jwt:grant --clientid ${SF_QA_CONSUMER_KEY} --jwt-key-file \$SERVER_KEY --username ${SF_QA_USERNAME} --instanceurl ${SF_INSTANCE_URL}
                        
                         sf run test --targetusername ${SF_QA_USERNAME} --testlevel ${TEST_LEVEL}
                         echo '✅ Deployment to QA completed successfully!'
@@ -64,7 +64,7 @@ pipeline {
             steps {
                 withCredentials([file(credentialsId: SERVER_KEY_CREDENTALS_ID, variable: 'SERVER_KEY')]) {
                     sh """
-                        sf auth:jwt:grant --clientid ${SF_UAT_CONSUMER_KEY} --jwtkeyfile \$SERVER_KEY --username ${SF_UAT_USERNAME} --instanceurl ${SF_INSTANCE_URL}
+                        sf auth:jwt:grant --clientid ${SF_UAT_CONSUMER_KEY} --jwt-key-file \$SERVER_KEY --username ${SF_UAT_USERNAME} --instanceurl ${SF_INSTANCE_URL}
                         
                         sf run test --targetusername ${SF_UAT_USERNAME} --testlevel ${TEST_LEVEL}
                         echo '✅ Deployment to UAT completed successfully!'
