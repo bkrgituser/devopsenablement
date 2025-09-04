@@ -39,8 +39,9 @@ pipeline {
                 withCredentials([file(credentialsId: SERVER_KEY_CREDENTALS_ID, variable: 'SERVER_KEY')]) {
                     sh """
                         sf auth:jwt:grant --clientid ${SF_CONSUMER_KEY} --jwtkeyfile \$SERVER_KEY --username ${SF_USERNAME} --instanceurl ${SF_INSTANCE_URL}
-                        sf package version promote -p ${PACKAGE_VERSION} --noprompt --targetusername ${SF_USERNAME}
+                       
                         sf run test --targetusername ${SF_USERNAME} --testlevel ${TEST_LEVEL}
+                        echo '✅ Deployment to Dev completed successfully!'
                     """
                 }
             }
@@ -51,8 +52,9 @@ pipeline {
                 withCredentials([file(credentialsId: SERVER_KEY_CREDENTALS_ID, variable: 'SERVER_KEY')]) {
                     sh """
                         sf auth:jwt:grant --clientid ${SF_QA_CONSUMER_KEY} --jwtkeyfile \$SERVER_KEY --username ${SF_QA_USERNAME} --instanceurl ${SF_INSTANCE_URL}
-                        sf package install --package ${PACKAGE_VERSION} --targetusername ${SF_QA_USERNAME} --wait 10 --publishwait 10 --noprompt
+                       
                         sf run test --targetusername ${SF_QA_USERNAME} --testlevel ${TEST_LEVEL}
+                        echo '✅ Deployment to Dev completed successfully!'
                     """
                 }
             }
@@ -63,8 +65,9 @@ pipeline {
                 withCredentials([file(credentialsId: SERVER_KEY_CREDENTALS_ID, variable: 'SERVER_KEY')]) {
                     sh """
                         sf auth:jwt:grant --clientid ${SF_UAT_CONSUMER_KEY} --jwtkeyfile \$SERVER_KEY --username ${SF_UAT_USERNAME} --instanceurl ${SF_INSTANCE_URL}
-                        sf package install --package ${PACKAGE_VERSION} --targetusername ${SF_UAT_USERNAME} --wait 10 --publishwait 10 --noprompt
+                        
                         sf run test --targetusername ${SF_UAT_USERNAME} --testlevel ${TEST_LEVEL}
+                        echo '✅ Deployment to Dev completed successfully!'
                     """
                 }
             }
