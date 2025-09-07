@@ -1,7 +1,7 @@
 /*
  * This Jenkinsfile automates a Salesforce CI/CD pipeline.
  * It is triggered by a push to the 'dev' branch and deploys
- * a delta package to the QA org.
+ * all the code to the Dev org, then to the QA org.
  */
 pipeline {
     agent any
@@ -11,15 +11,15 @@ pipeline {
         PATH = "/Users/kburugu/.nvm/versions/node/v20.19.0/bin:$PATH"
 
         // Credentials for the private key.
-        SERVER_KEY_CREDENTIALS_ID = "${env.SERVER_KEY_CREDENTIALS_ID}"
+        SERVER_KEY_CREDENTIALS_ID = "your-server-key-credential-id"
 
         // Set email recipients to a specific email address.
         EMAIL_RECIPIENTS = "chanrdra@gmail.com"
         
-        // Dev Org credentials (source of truth for the pipeline)
-        SF_CONSUMER_KEY = "${env.SF_DEV_CONSUMER_KEY}"
-        SF_USERNAME = "${env.SF_DEV_INT_USERNAME}"
-        SF_INSTANCE_URL = "${env.SF_DEV_INSTANCE_URL}"
+        // Dev Org credentials (target for the deployment)
+        SF_DEV_CONSUMER_KEY = "${env.SF_DEV_CONSUMER_KEY}"
+        SF_DEV_USERNAME = "${env.SF_DEV_INT_USERNAME}"
+        SF_DEV_INSTANCE_URL = "${env.SF_DEV_INSTANCE_URL}"
         
         // QA Org credentials (target for the deployment)
         SF_QA_CONSUMER_KEY = "${env.SF_QA_CONSUMER_KEY}"
@@ -37,6 +37,37 @@ pipeline {
                 checkout scm
             }
         }
+        
+        stage('Deploy to Dev') {
+            // This stage will run for every push to the dev branch.
+            when {
+                branch 'dev'
+            }
+            steps {
+                script {
+                    // A helper function to perform authentication and deployment to Dev.
+                    def deployToDevOrg(consumerKey, username, instanceUrl) {
+                        withCredentials([file(credentialsId: SERVER_KEY_CREDENTIALS_ID, variable: 'SERVER_KEY')]) {
+                            sh """#!/bin/bash -e
+                                set +x
+                                echo 'Authenticating with JWT...'
+                                sf auth:jwt:grant --clientid ${consumerKey} --jwt-key-file "\$SERVER_KEY" --username ${username} --instanceurl ${instanceUrl}
+                                set -x
+                                
+                                echo 'Deploying all changes from repository to Dev Org...'
+                                // Deploy all source code to the Dev Org
+                                sf project deploy start --target-org ${username} --source-dir force-app/main/default --wait 10 --test-level ${TEST_LEVEL}
+                                
+                                echo '✅ Deployment to Dev completed successfully!'
+                            """
+                        }
+                    }
+                    
+                    // Call the function to deploy to the Dev Org
+                    deployToDevOrg(SF_DEV_CONSUMER_KEY, SF_DEV_USERNAME, SF_DEV_INSTANCE_URL)
+                }
+            }
+        }
 
         stage('Deploy to QA') {
             // This stage will now only run if the branch is 'dev'
@@ -45,8 +76,8 @@ pipeline {
             }
             steps {
                 script {
-                    // A helper function to perform authentication and deployment.
-                    def deployToOrg(orgName, consumerKey, username, instanceUrl, deltaPackagePath) {
+                    // A helper function to perform authentication and delta deployment to QA.
+                    def deployToQAOrg(orgName, consumerKey, username, instanceUrl, deltaPackagePath) {
                         withCredentials([file(credentialsId: SERVER_KEY_CREDENTIALS_ID, variable: 'SERVER_KEY')]) {
                             sh """#!/bin/bash -e
                                 set +x
@@ -65,7 +96,7 @@ pipeline {
                     sh 'sfdx-git-delta --from HEAD^1 --to HEAD --output ./.delta-package'
                     
                     // Call the reusable function to perform the deployment
-                    deployToOrg('QA', SF_QA_CONSUMER_KEY, SF_QA_USERNAME, SF_QA_INSTANCE_URL, '.delta-package')
+                    deployToQAOrg('QA', SF_QA_CONSUMER_KEY, SF_QA_USERNAME, SF_QA_INSTANCE_URL, '.delta-package')
                 }
             }
         }
