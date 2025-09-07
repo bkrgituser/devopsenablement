@@ -21,7 +21,7 @@ pipeline {
         // Dev Org credentials (target for the deployment)
         SF_DEV_CONSUMER_KEY = "${env.SF_DEV_CONSUMER_KEY}"
         SF_DEV_USERNAME = "${env.SF_DEV_INT_USERNAME}"
-        SF_DEV_Deploy_USERNAME = "${env.SF_Dev_Admin_ID}"
+       // SF_DEV_Deploy_USERNAME = "${env.SF_Dev_Admin_ID}"
       
         
         // QA Org credentials (target for the deployment)
@@ -54,7 +54,8 @@ pipeline {
                             sh """#!/bin/bash -e
                                 set +x
                                 echo 'Authenticating with JWT...for Dev Org'
-                                sf auth:jwt:grant --clientid ${SF_DEV_CONSUMER_KEY} --jwt-key-file "\$SERVER_KEY" --username ${SF_DEV_USERNAME} --instanceurl ${SF_INSTANCE_URL}
+                             #   sf auth:jwt:grant --clientid ${SF_DEV_CONSUMER_KEY} --jwt-key-file "\$SERVER_KEY" --username ${SF_DEV_USERNAME} --instanceurl ${SF_INSTANCE_URL}
+                                  sf auth:jwt:grant --clientid ${SF_DEV_CONSUMER_KEY} --jwt-key-file "\$SERVER_KEY" --username ${SF_DEV_Deploy_USERNAME} --instanceurl ${SF_INSTANCE_URL}
                                 set -x
                                 
                                   # Find all changed Apex classes since the last commit
