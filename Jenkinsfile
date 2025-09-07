@@ -1,30 +1,62 @@
+/*
+ * This Jenkinsfile automates a Salesforce CI/CD pipeline.
+ * It is triggered by a push to the 'dev' branch and deploys
+ * a delta package to the QA org.
+ */
 pipeline {
     agent any
 
     environment {
-        
-         PATH = "/Users/kburugu/.nvm/versions/node/v20.19.0/bin:$PATH"
+        // This is a dynamic path, it should be set in Jenkins global configuration
+        // or as a variable in the Jenkins job to avoid hardcoding.
+     //   PATH = "${env.NODE_HOME}/bin:$PATH"
+        PATH = "/Users/kburugu/.nvm/versions/node/v20.19.0/bin:$PATH"
+
+        // Credentials for the private key, should be set in Jenkins
+        // to match the ID of the Secret File credential.
+       // SERVER_KEY_CREDENTIALS_ID = 'your-server-key-credential-id'
         SERVER_KEY_CREDENTALS_ID = "${env.SERVER_KEY_CREDENTALS_ID}"
 
-        SF_INSTANCE_URL = "${env.SF_INSTANCE_URL}"
+        // Set email recipients using Jenkins' global or job-specific environment variables
+        // to avoid hardcoding them in the Jenkinsfile.
+       // EMAIL_RECIPIENTS = "${env.EMAIL_RECIPIENTS}"
+        EMAIL_RECIPIENTS = "chanrdra@gmail.com"
         
-        // Dev Org
-        SF_CONSUMER_KEY       = "${env.SF_Dev_CONSUMER_KEY}"
-        SF_USERNAME           = "${env.SF_Dev_Int_USERNAME}"
+        // Dev Org credentials (source of truth for the pipeline)
+        SF_CONSUMER_KEY = "${env.SF_DEV_CONSUMER_KEY}"
+        SF_USERNAME = "${env.SF_DEV_INT_USERNAME}"
+        SF_INSTANCE_URL = "${env.SF_DEV_INSTANCE_URL}"
+        
+        // QA Org credentials (target for the deployment)
+        SF_QA_CONSUMER_KEY = "${env.SF_QA_CONSUMER_KEY}"
+        SF_QA_USERNAME = "${env.SF_QA_INT_USERNAME}"
+        SF_QA_INSTANCE_URL = "${env.SF_QA_INSTANCE_URL}"
+        
+        // The test level to run
+        TEST_LEVEL = 'RunLocalTests'
+    }
 
-        // QA Org
-        SF_QA_CONSUMER_KEY    = "${env.SF_QA_CONSUMER_KEY}"
-        SF_QA_USERNAME        = "${env.SF_QA_Int_USERNAME}"
-
-        // UAT Org
-        SF_UAT_CONSUMER_KEY   = "${env.SF_UAT_CONSUMER_KEY}"
-        SF_UAT_USERNAME       = "${env.SF_UAT_Int_USERNAME}"
-
-        PACKAGE_NAME    = 'My Package'
-        PACKAGE_VERSION = '04tXXXXXXXXXXXXXXX' // Replace with your actual package version
-        TEST_LEVEL      = 'RunLocalTests'
-
-        EMAIL_RECIPIENTS = 'chanrdra@gmail.com' // Add your email recipients here or via Jenkins env config
+    // A helper function to perform authentication and deployment.
+    def deployToOrg(orgName, consumerKey, username, instanceUrl, deltaPackagePath) {
+        stage("Deploy to ${orgName}") {
+            steps {
+                script {
+                    withCredentials([file(credentialsId: SERVER_KEY_CREDENTIALS_ID, variable: 'SERVER_KEY')]) {
+                        sh """#!/bin/bash -e
+                            set +x
+                            echo 'Authenticating with JWT...'
+                            sf auth:jwt:grant --clientid ${SF_CONSUMER_KEY} --jwt-key-file "\$SERVER_KEY" --username ${SF_USERNAME} --instanceurl ${SF_INSTANCE_URL}
+                            set -x
+                            
+                            echo 'Deploying delta package to Salesforce Org...'
+                            sf project deploy start --target-org ${SF_QA_USERNAME} --source-dir ${deltaPackagePath} --test-level ${TEST_LEVEL} --wait 10
+                            
+                            echo '✅ Deployment to ${orgName} completed successfully!'
+                        """
+                    }
+                }
+            }
+        }
     }
 
     stages {
@@ -34,46 +66,24 @@ pipeline {
             }
         }
 
-        stage('Deploy to Dev') {
-            steps {
-                withCredentials([file(credentialsId: SERVER_KEY_CREDENTALS_ID, variable: 'SERVER_KEY')]) {
-                    sh """
-                        sf auth:jwt:grant --clientid ${SF_CONSUMER_KEY} --jwt-key-file \$SERVER_KEY --username ${SF_USERNAME} --instanceurl ${SF_INSTANCE_URL}
-                       
-                        sf run test --targetusername ${SF_USERNAME} --testlevel ${TEST_LEVEL}
-                        echo '✅ Deployment to Dev completed successfully!'
-                    """
-                }
-            }
-        }
-
         stage('Deploy to QA') {
-            steps {
-                withCredentials([file(credentialsId: SERVER_KEY_CREDENTALS_ID, variable: 'SERVER_KEY')]) {
-                    sh """
-                        sf auth:jwt:grant --clientid ${SF_QA_CONSUMER_KEY} --jwt-key-file \$SERVER_KEY --username ${SF_QA_USERNAME} --instanceurl ${SF_INSTANCE_URL}
-                       
-                        sf run test --targetusername ${SF_QA_USERNAME} --testlevel ${TEST_LEVEL}
-                        echo '✅ Deployment to QA completed successfully!'
-                    """
-                }
+            // This stage will now only run if the branch is 'dev'
+            when {
+                branch 'dev'
             }
-        }
-
-        stage('Deploy to UAT') {
             steps {
-                withCredentials([file(credentialsId: SERVER_KEY_CREDENTALS_ID, variable: 'SERVER_KEY')]) {
-                    sh """
-                        sf auth:jwt:grant --clientid ${SF_UAT_CONSUMER_KEY} --jwt-key-file \$SERVER_KEY --username ${SF_UAT_USERNAME} --instanceurl ${SF_INSTANCE_URL}
-                        
-                        sf run test --targetusername ${SF_UAT_USERNAME} --testlevel ${TEST_LEVEL}
-                        echo '✅ Deployment to UAT completed successfully!'
-                    """
+                script {
+                    // Create a delta package based on the last two commits
+                    sh 'sfdx-git-delta --from HEAD^1 --to HEAD --output ./.delta-package'
+                    
+                    // Call the reusable function to perform the deployment
+                    deployToOrg('QA', SF_QA_CONSUMER_KEY, SF_QA_USERNAME, SF_QA_INSTANCE_URL, '.delta-package')
                 }
             }
         }
     }
 
+    // Post-build actions for success and failure.
     post {
         success {
             echo '✅ Deployment pipeline completed successfully!'
@@ -81,7 +91,7 @@ pipeline {
                  subject: "SUCCESS: Jenkins Deployment Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]'",
                  body: """Hello Team,
 
-The deployment pipeline completed successfully.
+The deployment to QA completed successfully.
 
 Job: ${env.JOB_NAME}
 Build Number: ${env.BUILD_NUMBER}
@@ -96,7 +106,7 @@ Jenkins"""
                  subject: "FAILURE: Jenkins Deployment Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]'",
                  body: """Hello Team,
 
-The deployment pipeline has failed.
+The deployment to QA has failed.
 
 Job: ${env.JOB_NAME}
 Build Number: ${env.BUILD_NUMBER}
