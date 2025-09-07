@@ -55,7 +55,7 @@ pipeline {
                                 set +x
                                 echo 'Authenticating with JWT...for Dev Org'
                                  sf auth:jwt:grant --clientid ${SF_DEV_CONSUMER_KEY} --jwt-key-file "\$SERVER_KEY" --username ${SF_DEV_USERNAME} --instanceurl ${SF_INSTANCE_URL}
-                                # sf auth:jwt:grant --clientid ${SF_DEV_CONSUMER_KEY} --jwt-key-file "\$SERVER_KEY" --username ${SF_DEV_Deploy_USERNAME} --instanceurl ${SF_INSTANCE_URL}
+                               
                                 set -x
                                 
                                   # Find all changed Apex classes since the last commit
