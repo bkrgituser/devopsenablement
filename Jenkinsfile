@@ -57,11 +57,27 @@ pipeline {
                                 sf auth:jwt:grant --clientid ${SF_DEV_CONSUMER_KEY} --jwt-key-file "\$SERVER_KEY" --username ${SF_DEV_USERNAME} --instanceurl ${SF_INSTANCE_URL}
                                 set -x
                                 
-                                echo 'Deploying all changes from repository to Dev Org...Done'
-                                # Deploy all source code to the Dev Org
-                                sf project deploy start --target-org ${SF_DEV_Deploy_USERNAME} --source-dir force-app/main/default --wait 10 --test-level ${TEST_LEVEL}
-                                  echo 'Authorized Successfully and Checking'
-                                echo '✅ Deployment to Dev completed successfully!'
+                                  # Find all changed Apex classes since the last commit
+                            CHANGED_APEX_FILES=\$(git diff --name-only HEAD~1 | grep 'force-app/main/default/classes/.*.cls')
+
+                            # Extract just the class names and format for the --metadata flag
+                            APEX_METADATA=\$(echo "\$CHANGED_APEX_FILES" | sed 's/force-app\\/main\\/default\\/classes\\/\\(.*\\).cls/ApexClass:\\1/g' | tr '\\n' ',')
+                            
+                             # Remove the trailing comma
+                            APEX_METADATA=\${APEX_METADATA%,}
+
+                            # If no Apex files were changed, exit gracefully
+                            if [ -z "\$CHANGED_APEX_FILES" ]; then
+                                echo 'No Apex classes changed, skipping deployment.'
+                                exit 0
+                            fi
+
+                               echo "Deploying the following Apex classes: \${APEX_METADATA}"
+                            # Deploy only the changed Apex classes to the Dev Org
+                            sf project deploy start --target-org ${SF_DEV_USERNAME} --metadata "\${APEX_METADATA}" --wait 10 --test-level ${TEST_LEVEL}
+                            
+                            echo 'Authorized Successfully and Checking'
+                            echo '✅ Deployment to Dev completed successfully!'
                             """
                         }
                     
