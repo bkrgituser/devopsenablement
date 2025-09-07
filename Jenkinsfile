@@ -52,12 +52,12 @@ pipeline {
                         withCredentials([file(credentialsId: SERVER_KEY_CREDENTALS_ID, variable: 'SERVER_KEY')]) {
                             sh """#!/bin/bash -e
                                 set +x
-                                echo 'Authenticating with JWT...'
+                                echo 'Authenticating with JWT...for Dev Org'
                                 sf auth:jwt:grant --clientid ${SF_DEV_CONSUMER_KEY} --jwt-key-file "\$SERVER_KEY" --username ${SF_DEV_USERNAME} --instanceurl ${SF_INSTANCE_URL}
                                 set -x
                                 
                                 echo 'Deploying all changes from repository to Dev Org...Done'
-                                // Deploy all source code to the Dev Org
+                                # Deploy all source code to the Dev Org
                                 sf project deploy start --target-org ${SF_DEV_USERNAME} --source-dir force-app/main/default --wait 10 --test-level ${TEST_LEVEL}
                                   echo 'Authorized Successfully and Checking'
                                 echo '✅ Deployment to Dev completed successfully!'
