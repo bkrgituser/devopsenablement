@@ -11,7 +11,9 @@ pipeline {
         PATH = "/Users/kburugu/.nvm/versions/node/v20.19.0/bin:$PATH"
 
         // Credentials for the private key.
-        SERVER_KEY_CREDENTIALS_ID = "your-server-key-credential-id"
+        SERVER_KEY_CREDENTIALS_ID = "${env.SERVER_KEY_CREDENTALS_ID}"
+
+        SF_INSTANCE_URL = "${env.SF_INSTANCE_URL}"
 
         // Set email recipients to a specific email address.
         EMAIL_RECIPIENTS = "chanrdra@gmail.com"
@@ -19,12 +21,12 @@ pipeline {
         // Dev Org credentials (target for the deployment)
         SF_DEV_CONSUMER_KEY = "${env.SF_DEV_CONSUMER_KEY}"
         SF_DEV_USERNAME = "${env.SF_DEV_INT_USERNAME}"
-        SF_DEV_INSTANCE_URL = "${env.SF_DEV_INSTANCE_URL}"
+      
         
         // QA Org credentials (target for the deployment)
         SF_QA_CONSUMER_KEY = "${env.SF_QA_CONSUMER_KEY}"
         SF_QA_USERNAME = "${env.SF_QA_INT_USERNAME}"
-        SF_QA_INSTANCE_URL = "${env.SF_QA_INSTANCE_URL}"
+     
         
         // The test level to run
         TEST_LEVEL = 'RunLocalTests'
@@ -46,12 +48,12 @@ pipeline {
             steps {
                 script {
                     // A helper function to perform authentication and deployment to Dev.
-                    def deployToDevOrg(consumerKey, username, instanceUrl) {
-                        withCredentials([file(credentialsId: SERVER_KEY_CREDENTIALS_ID, variable: 'SERVER_KEY')]) {
+                
+                        withCredentials([file(credentialsId: SERVER_KEY_CREDENTALS_ID, variable: 'SERVER_KEY')]) {
                             sh """#!/bin/bash -e
                                 set +x
                                 echo 'Authenticating with JWT...'
-                                sf auth:jwt:grant --clientid ${consumerKey} --jwt-key-file "\$SERVER_KEY" --username ${username} --instanceurl ${instanceUrl}
+                                sf auth:jwt:grant --clientid ${SF_DEV_CONSUMER_KEY} --jwt-key-file "\$SERVER_KEY" --username ${SF_DEV_USERNAME} --instanceurl ${SF_INSTANCE_URL}
                                 set -x
                                 
                                 echo 'Deploying all changes from repository to Dev Org...'
@@ -61,45 +63,15 @@ pipeline {
                                 echo '✅ Deployment to Dev completed successfully!'
                             """
                         }
-                    }
+                    
                     
                     // Call the function to deploy to the Dev Org
-                    deployToDevOrg(SF_DEV_CONSUMER_KEY, SF_DEV_USERNAME, SF_DEV_INSTANCE_URL)
+                  //  deployToDevOrg(SF_DEV_CONSUMER_KEY, SF_DEV_USERNAME, SF_DEV_INSTANCE_URL)
                 }
             }
         }
 
-        stage('Deploy to QA') {
-            // This stage will now only run if the branch is 'dev'
-            when {
-                branch 'dev'
-            }
-            steps {
-                script {
-                    // A helper function to perform authentication and delta deployment to QA.
-                    def deployToQAOrg(orgName, consumerKey, username, instanceUrl, deltaPackagePath) {
-                        withCredentials([file(credentialsId: SERVER_KEY_CREDENTIALS_ID, variable: 'SERVER_KEY')]) {
-                            sh """#!/bin/bash -e
-                                set +x
-                                echo 'Authenticating with JWT...'
-                                sf auth:jwt:grant --clientid ${consumerKey} --jwt-key-file "\$SERVER_KEY" --username ${username} --instanceurl ${instanceUrl}
-                                set -x
-                                
-                                echo 'Deploying delta package to Salesforce Org...'
-                                sf project deploy start --target-org ${username} --source-dir ${deltaPackagePath} --test-level ${TEST_LEVEL} --wait 10
-                                
-                                echo '✅ Deployment to ${orgName} completed successfully!'
-                            """
-                        }
-                    }
-                    // Create a delta package based on the last two commits
-                    sh 'sfdx-git-delta --from HEAD^1 --to HEAD --output ./.delta-package'
-                    
-                    // Call the reusable function to perform the deployment
-                    deployToQAOrg('QA', SF_QA_CONSUMER_KEY, SF_QA_USERNAME, SF_QA_INSTANCE_URL, '.delta-package')
-                }
-            }
-        }
+       
     }
 
     // Post-build actions for success and failure.
