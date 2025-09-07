@@ -42,9 +42,9 @@ pipeline {
         
         stage('Deploy to Dev Started') {
             // This stage will run for every push to the dev branch.
-            when {
-                branch '*/dev'
-            }
+           // when {
+           //     branch '*/dev'
+          //  }
             steps {
                 script {
                     // A helper function to perform authentication and deployment to Dev.
@@ -56,7 +56,7 @@ pipeline {
                                 sf auth:jwt:grant --clientid ${SF_DEV_CONSUMER_KEY} --jwt-key-file "\$SERVER_KEY" --username ${SF_DEV_USERNAME} --instanceurl ${SF_INSTANCE_URL}
                                 set -x
                                 
-                                echo 'Deploying all changes from repository to Dev Org...'
+                                echo 'Deploying all changes from repository to Dev Org...Done'
                                 // Deploy all source code to the Dev Org
                                 sf project deploy start --target-org ${SF_DEV_USERNAME} --source-dir force-app/main/default --wait 10 --test-level ${TEST_LEVEL}
                                   echo 'Authorized Successfully and Checking'
@@ -64,7 +64,7 @@ pipeline {
                             """
                         }
                     
-                    
+                    // 
                     // Call the function to deploy to the Dev Org
                   //  deployToDevOrg(SF_DEV_CONSUMER_KEY, SF_DEV_USERNAME, SF_DEV_INSTANCE_URL)
                 }
