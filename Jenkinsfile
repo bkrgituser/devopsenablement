@@ -21,6 +21,7 @@ pipeline {
         // Dev Org credentials (target for the deployment)
         SF_DEV_CONSUMER_KEY = "${env.SF_DEV_CONSUMER_KEY}"
         SF_DEV_USERNAME = "${env.SF_DEV_INT_USERNAME}"
+        SF_DEV_Deploy_USERNAME = "${env.SF_Dev_Admin_ID}"
       
         
         // QA Org credentials (target for the deployment)
@@ -58,7 +59,7 @@ pipeline {
                                 
                                 echo 'Deploying all changes from repository to Dev Org...Done'
                                 # Deploy all source code to the Dev Org
-                                sf project deploy start --target-org ${SF_DEV_USERNAME} --source-dir force-app/main/default --wait 10 --test-level ${TEST_LEVEL}
+                                sf project deploy start --target-org ${SF_DEV_Deploy_USERNAME} --source-dir force-app/main/default --wait 10 --test-level ${TEST_LEVEL}
                                   echo 'Authorized Successfully and Checking'
                                 echo '✅ Deployment to Dev completed successfully!'
                             """
