@@ -7,19 +7,13 @@ pipeline {
     agent any
 
     environment {
-        // This is a dynamic path, it should be set in Jenkins global configuration
-        // or as a variable in the Jenkins job to avoid hardcoding.
-     //   PATH = "${env.NODE_HOME}/bin:$PATH"
+        // As per request, using a hardcoded PATH and a pre-defined credential ID.
         PATH = "/Users/kburugu/.nvm/versions/node/v20.19.0/bin:$PATH"
 
-        // Credentials for the private key, should be set in Jenkins
-        // to match the ID of the Secret File credential.
-       // SERVER_KEY_CREDENTIALS_ID = 'your-server-key-credential-id'
-        SERVER_KEY_CREDENTALS_ID = "${env.SERVER_KEY_CREDENTALS_ID}"
+        // Credentials for the private key.
+        SERVER_KEY_CREDENTIALS_ID = "${env.SERVER_KEY_CREDENTIALS_ID}"
 
-        // Set email recipients using Jenkins' global or job-specific environment variables
-        // to avoid hardcoding them in the Jenkinsfile.
-       // EMAIL_RECIPIENTS = "${env.EMAIL_RECIPIENTS}"
+        // Set email recipients to a specific email address.
         EMAIL_RECIPIENTS = "chanrdra@gmail.com"
         
         // Dev Org credentials (source of truth for the pipeline)
@@ -35,7 +29,6 @@ pipeline {
         // The test level to run
         TEST_LEVEL = 'RunLocalTests'
     }
-
 
     stages {
         stage('Checkout') {
@@ -54,29 +47,19 @@ pipeline {
                 script {
                     // A helper function to perform authentication and deployment.
                     def deployToOrg(orgName, consumerKey, username, instanceUrl, deltaPackagePath) {
-                         withCredentials([file(credentialsId: SERVER_KEY_CREDENTIALS_ID, variable: 'SERVER_KEY')]) {
+                        withCredentials([file(credentialsId: SERVER_KEY_CREDENTIALS_ID, variable: 'SERVER_KEY')]) {
                             sh """#!/bin/bash -e
-
                                 set +x
-
                                 echo 'Authenticating with JWT...'
-
                                 sf auth:jwt:grant --clientid ${consumerKey} --jwt-key-file "\$SERVER_KEY" --username ${username} --instanceurl ${instanceUrl}
-
                                 set -x
                                 
                                 echo 'Deploying delta package to Salesforce Org...'
-
                                 sf project deploy start --target-org ${username} --source-dir ${deltaPackagePath} --test-level ${TEST_LEVEL} --wait 10
-
-                
-
+                                
                                 echo '✅ Deployment to ${orgName} completed successfully!'
-
                             """
-
                         }
-
                     }
                     // Create a delta package based on the last two commits
                     sh 'sfdx-git-delta --from HEAD^1 --to HEAD --output ./.delta-package'
