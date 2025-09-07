@@ -40,10 +40,10 @@ pipeline {
             }
         }
         
-        stage('Deploy to Dev') {
+        stage('Deploy to Dev Started') {
             // This stage will run for every push to the dev branch.
             when {
-                branch 'dev'
+                branch '*/dev'
             }
             steps {
                 script {
