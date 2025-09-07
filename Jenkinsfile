@@ -36,32 +36,11 @@ pipeline {
         TEST_LEVEL = 'RunLocalTests'
     }
 
-    // A helper function to perform authentication and deployment.
-    def deployToOrg(orgName, consumerKey, username, instanceUrl, deltaPackagePath) {
-        stage("Deploy to ${orgName}") {
-            steps {
-                script {
-                    withCredentials([file(credentialsId: SERVER_KEY_CREDENTIALS_ID, variable: 'SERVER_KEY')]) {
-                        sh """#!/bin/bash -e
-                            set +x
-                            echo 'Authenticating with JWT...'
-                            sf auth:jwt:grant --clientid ${SF_CONSUMER_KEY} --jwt-key-file "\$SERVER_KEY" --username ${SF_USERNAME} --instanceurl ${SF_INSTANCE_URL}
-                            set -x
-                            
-                            echo 'Deploying delta package to Salesforce Org...'
-                            sf project deploy start --target-org ${SF_QA_USERNAME} --source-dir ${deltaPackagePath} --test-level ${TEST_LEVEL} --wait 10
-                            
-                            echo '✅ Deployment to ${orgName} completed successfully!'
-                        """
-                    }
-                }
-            }
-        }
-    }
 
     stages {
         stage('Checkout') {
             steps {
+                // The `checkout scm` step automatically clones the repository based on the job configuration.
                 checkout scm
             }
         }
@@ -73,6 +52,32 @@ pipeline {
             }
             steps {
                 script {
+                    // A helper function to perform authentication and deployment.
+                    def deployToOrg(orgName, consumerKey, username, instanceUrl, deltaPackagePath) {
+                         withCredentials([file(credentialsId: SERVER_KEY_CREDENTIALS_ID, variable: 'SERVER_KEY')]) {
+                            sh """#!/bin/bash -e
+
+                                set +x
+
+                                echo 'Authenticating with JWT...'
+
+                                sf auth:jwt:grant --clientid ${consumerKey} --jwt-key-file "\$SERVER_KEY" --username ${username} --instanceurl ${instanceUrl}
+
+                                set -x
+                                
+                                echo 'Deploying delta package to Salesforce Org...'
+
+                                sf project deploy start --target-org ${username} --source-dir ${deltaPackagePath} --test-level ${TEST_LEVEL} --wait 10
+
+                
+
+                                echo '✅ Deployment to ${orgName} completed successfully!'
+
+                            """
+
+                        }
+
+                    }
                     // Create a delta package based on the last two commits
                     sh 'sfdx-git-delta --from HEAD^1 --to HEAD --output ./.delta-package'
                     
