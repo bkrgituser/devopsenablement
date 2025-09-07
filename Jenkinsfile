@@ -42,6 +42,7 @@ pipeline {
         
         stage('Deploy to Dev') {
             // This stage will run for every push to the dev branch.
+             echo 'Entere Successfully'
             when {
                 branch 'dev'
             }
