@@ -58,7 +58,7 @@ pipeline {
                                 
                                 echo 'Deploying all changes from repository to Dev Org...'
                                 // Deploy all source code to the Dev Org
-                                sf project deploy start --target-org ${username} --source-dir force-app/main/default --wait 10 --test-level ${TEST_LEVEL}
+                                sf project deploy start --target-org ${SF_DEV_USERNAME} --source-dir force-app/main/default --wait 10 --test-level ${TEST_LEVEL}
                                   echo 'Authorized Successfully'
                                 echo '✅ Deployment to Dev completed successfully!'
                             """
