@@ -81,7 +81,7 @@ pipeline {
                             #   sf project deploy start --target-org ${SF_QA_USERNAME} --metadata "\${APEX_METADATA}" --wait 10 --test-level ${TEST_LEVEL}
                             echo 'New Deploy Apex classes changed, skipping deployment.'
                             #  sf deploy metadata --metadata "\${APEX_METADATA}" --target-org ${SF_QA_USERNAME}
-                            sf project deploy start --metadata ApexClass:DemoDev --ignore-conflicts
+                            sf project deploy start --metadata ApexClass:DemoDev --ignore-conflicts --target-org qinte@int.com
                             echo 'Authorized Successfully and Checking'
                             echo '✅ Deployment to Dev completed successfully!'
                             """
