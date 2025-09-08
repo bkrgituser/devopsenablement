@@ -53,8 +53,8 @@ pipeline {
                         withCredentials([file(credentialsId: SERVER_KEY_CREDENTALS_ID, variable: 'SERVER_KEY')]) {
                             sh """#!/bin/bash -e
                                 set +x
-                                echo 'Authenticating with JWT...for Dev Org'
-                                 sf auth:jwt:grant --clientid ${SF_DEV_CONSUMER_KEY} --jwt-key-file "${SERVER_KEY}" --username ${SF_DEV_USERNAME} --instanceurl ${SF_INSTANCE_URL}
+                                # echo 'Authenticating with JWT...for Dev Org'
+                                 # sf auth:jwt:grant --clientid ${SF_DEV_CONSUMER_KEY} --jwt-key-file "${SERVER_KEY}" --username ${SF_DEV_USERNAME} --instanceurl ${SF_INSTANCE_URL}
                                   echo 'Authenticating with JWT...for QA Org'
                                  sf auth:jwt:grant --clientid ${SF_QA_CONSUMER_KEY} --jwt-key-file "${SERVER_KEY}" --username ${SF_QA_USERNAME} --instanceurl ${SF_INSTANCE_URL}
                                
@@ -78,9 +78,9 @@ pipeline {
                                echo "Deploying the following Apex classes: \${APEX_METADATA}"
                             # Deploy only the changed Apex classes to the Dev Org
                             
-                            #   sf project deploy start --target-org ${SF_DEV_USERNAME} --metadata "\${APEX_METADATA}" --wait 10 --test-level ${TEST_LEVEL}
+                            #   sf project deploy start --target-org ${SF_QA_USERNAME} --metadata "\${APEX_METADATA}" --wait 10 --test-level ${TEST_LEVEL}
                             echo 'New Deploy Apex classes changed, skipping deployment.'
-                            #  sf deploy metadata --metadata "\${APEX_METADATA}" --target-org ${SF_DEV_USERNAME}
+                            #  sf deploy metadata --metadata "\${APEX_METADATA}" --target-org ${SF_QA_USERNAME}
                             sf project deploy start --metadata ApexClass:DemoDev --ignore-conflicts
                             echo 'Authorized Successfully and Checking'
                             echo '✅ Deployment to Dev completed successfully!'
