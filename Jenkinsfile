@@ -64,6 +64,9 @@ pipeline {
 
         set -x
 
+ echo 'Deploying Custom Labels...'
+        sf project deploy start --source-dir force-app/main/default/labels/CustomLabels.labels-meta.xml --target-org devorg
+        
         # Find all changed Apex classes since the last commit
         CHANGED_APEX_FILES=\$(git diff --name-only HEAD~1 | grep 'force-app/main/default/classes/.*.cls')
 
