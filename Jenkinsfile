@@ -68,7 +68,9 @@ pipeline {
                             
                              # Remove the trailing comma
                             APEX_METADATA=\${APEX_METADATA%,}
-
+                            echo 'LabelChanges'
+                             sf project deploy start --source-dir force-app/main/default/labels/CustomLabels.labels-meta.xml --target-org devorginte@int.com 
+                            
                             # If no Apex files were changed, exit gracefully
                             if [ -z "\$CHANGED_APEX_FILES" ]; then
                                 echo 'No Apex classes changed, skipping deployment.'
@@ -83,7 +85,7 @@ pipeline {
                             #  sf deploy metadata --metadata "\${APEX_METADATA}" --target-org ${SF_DEV_USERNAME}
                           #  sf project deploy start --metadata ApexClass:DemoDev --ignore-conflicts --target-org devorginte@int.com 
                           
-                          sf project deploy start --source-dir force-app/main/default/classes/DemoDev.cls --target-org devorginte@int.com 
+                          sf project deploy start --source-dir force-app/main/default/labels/CustomLabels.labels-meta.xml --target-org devorginte@int.com 
                         echo 'Authorized Successfully and Checking'
                             echo '✅ Deployment to Dev completed successfully!'
                             """
