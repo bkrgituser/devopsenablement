@@ -75,8 +75,10 @@ pipeline {
 
                                echo "Deploying the following Apex classes: \${APEX_METADATA}"
                             # Deploy only the changed Apex classes to the Dev Org
-                            sf project deploy start --target-org ${SF_DEV_USERNAME} --metadata "\${APEX_METADATA}" --wait 10 --test-level ${TEST_LEVEL}
                             
+                            #   sf project deploy start --target-org ${SF_DEV_USERNAME} --metadata "\${APEX_METADATA}" --wait 10 --test-level ${TEST_LEVEL}
+                            echo 'New Deploy'
+                            sf deploy metadata --metadata "\${APEX_METADATA}" --target-org ${SF_DEV_USERNAME}
                             echo 'Authorized Successfully and Checking'
                             echo '✅ Deployment to Dev completed successfully!'
                             """
