@@ -2,10 +2,9 @@ Public class DemoDev{
 
 public static void main(String []args){
 
-System.debug('I am in Only');
-System.debug('I am in three');
-System.debug('I am in four');
-
+System.debug('I am in Dev one org');
+System.debug('I am Devops Engineer');
+System.debug('I am Devops Checking');
 }
 
 }
