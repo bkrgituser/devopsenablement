@@ -51,46 +51,44 @@ pipeline {
                     // A helper function to perform authentication and deployment to Dev.
                 
                         withCredentials([file(credentialsId: SERVER_KEY_CREDENTALS_ID, variable: 'SERVER_KEY')]) {
-                            sh """#!/bin/bash -e
-                                set +x
-                                # echo 'Authenticating with JWT...for Dev Org'
-                                  sf auth:jwt:grant --clientid ${SF_DEV_CONSUMER_KEY} --jwt-key-file "${SERVER_KEY}" --username ${SF_DEV_USERNAME} --instanceurl ${SF_INSTANCE_URL}
-                                  echo 'Authenticating with JWT...for QA Org'
-                                 # sf auth:jwt:grant --clientid ${SF_QA_CONSUMER_KEY} --jwt-key-file "${SERVER_KEY}" --username ${SF_QA_USERNAME} --instanceurl ${SF_INSTANCE_URL}
-                               
-                                set -x
-                                
-                                  # Find all changed Apex classes since the last commit
-                            CHANGED_APEX_FILES=\$(git diff --name-only HEAD~1 | grep 'force-app/main/default/classes/.*.cls')
+    sh """#!/bin/bash -e
+        set +x
 
-                            # Extract just the class names and format for the --metadata flag
-                            APEX_METADATA=\$(echo "\$CHANGED_APEX_FILES" | sed 's/force-app\\/main\\/default\\/classes\\/\\(.*\\).cls/ApexClass:\\1/g' | tr '\\n' ',')
-                            
-                             # Remove the trailing comma
-                            APEX_METADATA=\${APEX_METADATA%,}
-                            echo 'LabelChanges'
-                             sf project deploy start --source-dir force-app/main/default/labels/CustomLabels.labels-meta.xml --target-org devorginte@int.com 
-                            
-                            # If no Apex files were changed, exit gracefully
-                            if [ -z "\$CHANGED_APEX_FILES" ]; then
-                                echo 'No Apex classes changed, skipping deployment.'
-                                exit 0
-                            fi
+        echo '🔐 Authenticating with JWT...for Dev Org'
+        sf auth:jwt:grant \
+            --client-id "${SF_DEV_CONSUMER_KEY}" \
+            --jwt-key-file "${SERVER_KEY}" \
+            --username "${SF_DEV_USERNAME}" \
+            --instance-url "${SF_INSTANCE_URL}" \
+            --alias devorg
 
-                               echo "Deploying the following Apex classes: \${APEX_METADATA}"
-                            # Deploy only the changed Apex classes to the Dev Org
-                            
-                            #   sf project deploy start --target-org ${SF_DEV_USERNAME} --metadata "\${APEX_METADATA}" --wait 10 --test-level ${TEST_LEVEL}
-                            echo 'New Deploy Apex classes changed, skipping deployment.'
-                            #  sf deploy metadata --metadata "\${APEX_METADATA}" --target-org ${SF_DEV_USERNAME}
-                          #  sf project deploy start --metadata ApexClass:DemoDev --ignore-conflicts --target-org devorginte@int.com 
-                          
-                          sf project deploy start --source-dir force-app/main/default/labels/CustomLabels.labels-meta.xml --target-org devorginte@int.com 
-                        echo 'Authorized Successfully and Checking'
-                            echo '✅ Deployment to Dev completed successfully!'
-                            """
-                        }
-                    
+        set -x
+
+        # Find all changed Apex classes since the last commit
+        CHANGED_APEX_FILES=\$(git diff --name-only HEAD~1 | grep 'force-app/main/default/classes/.*.cls')
+
+        # Extract just the class names and format for the --metadata flag
+        APEX_METADATA=\$(echo "\$CHANGED_APEX_FILES" | sed 's|force-app/main/default/classes/\\(.*\\).cls|ApexClass:\\1|g' | tr '\\n' ',')
+
+        # Remove the trailing comma
+        APEX_METADATA=\${APEX_METADATA%,}
+
+        echo '📤 Deploying Custom Labels...'
+        sf project deploy start --source-dir force-app/main/default/labels/CustomLabels.labels-meta.xml --target-org devorg
+
+        # If no Apex files were changed, exit gracefully
+        if [ -z "\$CHANGED_APEX_FILES" ]; then
+            echo '✅ No Apex classes changed, skipping deployment.'
+            exit 0
+        fi
+
+        echo "🚀 Deploying the following Apex classes: \${APEX_METADATA}"
+        sf project deploy start --metadata "\${APEX_METADATA}" --target-org devorg --wait 10 --test-level RunLocalTests
+
+        echo '✅ Deployment to Dev completed successfully!'
+    """
+}
+
                     // 
                     // Call the function to deploy to the Dev Org
                   //  deployToDevOrg(SF_DEV_CONSUMER_KEY, SF_DEV_USERNAME, SF_DEV_INSTANCE_URL)
