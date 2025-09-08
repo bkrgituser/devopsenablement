@@ -73,13 +73,13 @@ pipeline {
         # Remove the trailing comma
         APEX_METADATA=\${APEX_METADATA%,}
 
-        echo '📤 Deploying Custom Labels...'
+        echo 'Deploying Custom Labels...'
         sf project deploy start --source-dir force-app/main/default/labels/CustomLabels.labels-meta.xml --target-org devorg
 
-        # If no Apex files were changed, exit gracefully
+        # If no Apex files were changed, exit gracefully exit 0
         if [ -z "\$CHANGED_APEX_FILES" ]; then
             echo '✅ No Apex classes changed, skipping deployment.'
-            exit 0
+            
         fi
 
         echo "🚀 Deploying the following Apex classes: \${APEX_METADATA}"
